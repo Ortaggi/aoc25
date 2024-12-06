@@ -1,0 +1,21 @@
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+....|..#|.
+....|...|.
+.#..^---+.
+........#.
+#.........
+......#...
+
+hashmap checked for places on which I've tried to put block
+when checking a single block:
+new set that gets updated on turns with position and currently facing dir -> if already in, loop
+
+where can we put stops:
+- only where we walk
+- only where we walk and where turning would lead us to a block
+  how is "turning would lead to block" defined?
+  whatever direction I'm moving in, if there is a block to my right I could place a 
+  block in my current position and get there (if I've already taken a step)

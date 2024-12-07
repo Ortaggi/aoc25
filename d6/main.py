@@ -1,6 +1,6 @@
 from enum import Enum
 
-test = True
+test = False
 f = None
 first_pos = None
     
@@ -63,11 +63,12 @@ def hash_dir_and_pos(dir: Dir, pos: tuple) -> str:
 
 
 class Grid:
-    def __init__(self, lines, base_loop = None, add_blk_pos = None):
+    def __init__(self, lines, base_loop = None, add_blk_pos = None, prev_visited = None):
         self.lines = lines
         self.lines_count = len(lines)
         self.line_len = len(lines[0])
         self.gsigns = ["^", ">", "<", "v"] 
+        self.prev_visited = prev_visited
         self.visited = set()
         self.find_guard_pos_and_dir(self.gsigns)
         global first_pos
@@ -102,7 +103,8 @@ class Grid:
                 self.move_left()
             case Dir.RIGHT:
                 self.move_right()
-
+        if self.game_over:
+            return False
         chash = hash_dir_and_pos(self.dir, self.pos)
         # print(chash)
         if chash in self.base_loop:
@@ -117,72 +119,64 @@ class Grid:
         for x in range(cur_x - 1, -1 , -1):
             if is_obstacle(self.lines[cur_y][x]):
                 return (cur_y, x)
-            if x == 0:
-                return None
+        return None
             
     def find_obs_right(self):
         cur_y, cur_x = self.pos
         for x in range(cur_x + 1, self.line_len):
             if is_obstacle(self.lines[cur_y][x]):
                 return (cur_y, x) 
-            if x == self.line_len - 1:
-                return None
+        return None
             
     def find_obs_down(self):
         cur_y, cur_x = self.pos
         for y in range(cur_y + 1, self.lines_count):
             if is_obstacle(self.lines[y][cur_x]):
                 return (y, cur_x)
-            if y == self.lines_count - 1:
-                return None
+        return None
             
     def find_obs_up(self):
         cur_y, cur_x = self.pos
         for y in range(cur_y - 1, -1 , -1):
             if is_obstacle(self.lines[y][cur_x]):
                 return (y, cur_x)
-            if y == 0:
-                return None
+        return None
 
     def move_left(self):
         cur_y, cur_x = self.pos
         for x in range(cur_x - 1, -1 , -1):
             if is_obstacle(self.lines[cur_y][x]):
-                break
+                return
             self.pos = (cur_y, x)
             self.visited.add(hash_pos(self.pos))
-            if x == 0:
-                self.game_over = True
+        self.game_over = True
             
     def move_right(self):
         cur_y, cur_x = self.pos
         for x in range(cur_x + 1, self.line_len):
             if is_obstacle(self.lines[cur_y][x]):
-                break
+                return
             self.pos = (cur_y, x)
             self.visited.add(hash_pos(self.pos))
-            if x == self.line_len - 1:
-                self.game_over = True
+        self.game_over = True
             
     def move_down(self):
         cur_y, cur_x = self.pos
         for y in range(cur_y + 1, self.lines_count):
             if is_obstacle(self.lines[y][cur_x]):
-                break
+                return
             self.pos = (y, cur_x)
             self.visited.add(hash_pos(self.pos))
-            if y == self.lines_count - 1:
-                self.game_over = True
+        self.game_over = True
             
     def move_up(self):
         cur_y, cur_x = self.pos
         for y in range(cur_y - 1, -1 , -1):
             if is_obstacle(self.lines[y][cur_x]):
-                break
+                return
             self.pos = (y, cur_x)
             self.visited.add(hash_pos(self.pos))
-            if y == 0:
-                self.game_over = True
+        self.game_over = True
             
     def debug(self):
         tmp = {}
@@ -199,15 +193,19 @@ class Grid:
             for x in range(self.line_len):
                 if (y,x) == self.add_blk_pos:
                     chars += "O"
+                elif (y,x) == first_pos:
+                    chars += "G"
                 elif hash_pos((y,x)) in tmp:
                     chars += "+"
                 elif hash_pos((y,x)) in self.visited:
                     chars += "X"
-                elif (y,x) == first_pos:
-                    chars += "G"
+                elif hash_pos((y,x)) in self.prev_visited:
+                    chars += "P"
                 else:
                     chars += self.lines[y][x]
-            print(chars)
+            f.write(chars)
+            f.write('\n')
+        f.write("\n\n")
 
     def check_up(self):
         y, x = self.pos
@@ -281,14 +279,14 @@ class Grid:
                 new_line += c
             new_lines.append(new_line)
 
-        temp_grid = Grid(new_lines, base_loop=self.base_loop, add_blk_pos=new_blk_pos)
+        temp_grid = Grid(new_lines, base_loop=self.base_loop, add_blk_pos=new_blk_pos, prev_visited=self.visited)
         return temp_grid.play_without_placing() # should return bool for if creates loop
 
     def play_without_placing(self):
         while not self.game_over:
             if self.move_guard():
-                self.debug()
-                print("==========")
+                # self.debug()
+                # print("==========")
                 return True
         return False
 
@@ -305,6 +303,7 @@ class Grid:
 
         if set_it:
             self.pos = new_pos
+            self.visited.add(hash_pos(new_pos))
         else:
             return new_pos
 
@@ -331,7 +330,7 @@ class Grid:
                 self.move()
                 continue
             new_obs = self.move(False)
-            if new_obs in self.checked:
+            if new_obs in self.checked or new_obs in self.visited:
                 self.move()
                 continue
             res = self.duplicate(new_obs)

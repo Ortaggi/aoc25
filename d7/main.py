@@ -3,12 +3,12 @@ def get_content(test = True):
     with open(fname) as f:
         return f.read()
 
-def can_equal(parts: list[int], goal: int, cur: int = 1):
+def can_equal(parts: list[int], goal: int, cur: int | None = None):
     if len(parts) == 0:
         return cur == goal
-    if can_equal(parts[1:], goal, cur*parts[0]):
+    if can_equal(parts[1:], goal, cur*parts[0] if cur else parts[0]):
         return True
-    if can_equal(parts[1:], goal, cur+parts[0]):
+    if can_equal(parts[1:], goal, cur+parts[0] if cur else parts[0]):
         return True
     return False
 

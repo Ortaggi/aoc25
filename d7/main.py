@@ -3,12 +3,22 @@ def get_content(test = True):
     with open(fname) as f:
         return f.read()
 
+def concat_ints(n: int, m: int) -> int:
+    temp = m
+    rank = 0
+    while temp != 0:
+        temp = temp // 10
+        rank += 1
+    return n*10**rank + m
+
 def can_equal(parts: list[int], goal: int, cur: int | None = None):
     if len(parts) == 0:
         return cur == goal
     if can_equal(parts[1:], goal, cur*parts[0] if cur else parts[0]):
         return True
     if can_equal(parts[1:], goal, cur+parts[0] if cur else parts[0]):
+        return True
+    if cur and can_equal(parts[1:], goal, concat_ints(cur, parts[0])):
         return True
     return False
 

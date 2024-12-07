@@ -1,6 +1,8 @@
 from enum import Enum
 
+test = True
 f = None
+first_pos = None
     
 class Dir(Enum):
     UP = 0
@@ -61,19 +63,24 @@ def hash_dir_and_pos(dir: Dir, pos: tuple) -> str:
 
 
 class Grid:
-    def __init__(self, lines, base_loop = None):
+    def __init__(self, lines, base_loop = None, add_blk_pos = None):
         self.lines = lines
         self.lines_count = len(lines)
         self.line_len = len(lines[0])
         self.gsigns = ["^", ">", "<", "v"] 
         self.visited = set()
         self.find_guard_pos_and_dir(self.gsigns)
+        global first_pos
+        if first_pos is None:
+            first_pos = self.pos
         self.game_over = False
         self.block_positions = set()
-        if base_loop is None:
-            self.base_loop = set()
-        else:
-            self.base_loop = base_loop.copy()
+        self.base_loop = set()
+        self.add_blk_pos = add_blk_pos
+        # if base_loop is None:
+        #     self.base_loop = set()
+        # else:
+        #     self.base_loop = base_loop.copy()
         self.checked = set()
 
     def find_guard_pos_and_dir(self, cs):
@@ -178,11 +185,26 @@ class Grid:
                 self.game_over = True
             
     def debug(self):
+        tmp = {}
+        for elem in self.base_loop:
+            pts = elem.split('|')
+            dir, poss = pts[0], pts[1]
+            pospa = poss.split(',')
+            y,x = int(pospa[0][1:]), int(pospa[1][:-1])
+            tmp[(y,x)] = dir
+        # print(tmp.keys())
+
         for y in range(self.lines_count):
             chars = ""
             for x in range(self.line_len):
-                if hash_pos((y,x)) in self.visited:
+                if (y,x) == self.add_blk_pos:
+                    chars += "O"
+                elif hash_pos((y,x)) in tmp:
+                    chars += "+"
+                elif hash_pos((y,x)) in self.visited:
                     chars += "X"
+                elif (y,x) == first_pos:
+                    chars += "G"
                 else:
                     chars += self.lines[y][x]
             print(chars)
@@ -193,7 +215,7 @@ class Grid:
             return "go"
         if is_obstacle(self.lines[y-1][x]):
             return "turn"
-        return "move,right"
+        return "move"
 
     def check_right(self):
         y, x = self.pos
@@ -201,7 +223,7 @@ class Grid:
             return "go"
         if is_obstacle(self.lines[y][x + 1]):
             return "turn"
-        return "move,down"
+        return "move"
 
     def check_down(self):
         y, x = self.pos
@@ -209,7 +231,7 @@ class Grid:
             return "go"
         if is_obstacle(self.lines[y+1][x]):
             return "turn"
-        return "move,left"
+        return "move"
 
     def check_left(self):
         y, x = self.pos
@@ -217,7 +239,7 @@ class Grid:
             return "go"
         if is_obstacle(self.lines[y][x - 1]):
             return "turn"
-        return "move,up"
+        return "move"
 
     def check_next_move(self):
         match self.dir:
@@ -233,58 +255,40 @@ class Grid:
 
     def find_obstacle_in_dir(self, dir):
         match dir:
-            case "up":
+            case Dir.UP:
                 return self.find_obs_up()
-            case "down":
+            case Dir.DOWN:
                 return self.find_obs_down()
-            case "left":
+            case Dir.LEFT:
                 return self.find_obs_left()
-            case "right":
+            case Dir.RIGHT:
                 return self.find_obs_right()
 
-    def move_in_dir(self, dir: str):
-        f.write(f"{self.pos[0]} {self.pos[1]} - {dir}\n")
-        match dir:
-            case "up":
-                self.pos = (self.pos[0] - 1, self.pos[1])
-            case "down":
-                self.pos = (self.pos[0] + 1, self.pos[1])
-            case "left":
-                self.pos = (self.pos[0], self.pos[1] - 1)
-            case "right":
-                self.pos = (self.pos[0], self.pos[1] + 1)
-
-    def duplicate(self, new_blk_pos, logit):
-        print(new_blk_pos)
+    def duplicate(self, new_blk_pos):
+        # print(new_blk_pos)
         new_lines = []
         for y in range(self.lines_count):
             new_line = ""
             for x in range(self.line_len):
-                try:
-                    if (y,x) == self.pos:
-                        c = self.dir.to_char() 
-                    elif (y,x) == new_blk_pos:
-                        c = '#'
-                    elif self.lines[y][x] in self.gsigns:
-                        c = '.'
-                    else:
-                        c = self.lines[y][x]
-                    new_line += c
-                except IndexError as e:
-                    print(f"{x=}, {y=}, {new_blk_pos=}")
-                    raise e
-            if logit:
-                pass
-                # print(new_line)
+                if (y,x) == self.pos:
+                    c = self.dir.to_char() 
+                elif (y,x) == new_blk_pos:
+                    c = '#'
+                elif self.lines[y][x] in self.gsigns:
+                    c = '.'
+                else:
+                    c = self.lines[y][x]
+                new_line += c
             new_lines.append(new_line)
 
-        temp_grid = Grid(new_lines, base_loop=self.base_loop)
+        temp_grid = Grid(new_lines, base_loop=self.base_loop, add_blk_pos=new_blk_pos)
         return temp_grid.play_without_placing() # should return bool for if creates loop
 
     def play_without_placing(self):
-        self.visited.add(hash_pos(self.pos))
         while not self.game_over:
             if self.move_guard():
+                self.debug()
+                print("==========")
                 return True
         return False
 
@@ -306,14 +310,10 @@ class Grid:
 
     def play(self):
         next_move = None
-        first = True
-        log = 0
-        logit = True
+        obs_loop = 0
+        obs_no_loop = 0
         while True:
             next_move = self.check_next_move()
-            if first:
-                print(next_move)
-                first = False
             if next_move == "go":
                 break
             if next_move == "turn":
@@ -325,25 +325,34 @@ class Grid:
                     self.base_loop.add(chash)
                 self.dir = self.dir.rotate()
                 continue
-            parts = next_move.split(',')
-            dir = parts[1]
+            dir = self.dir.rotate()
             obs_in_path = self.find_obstacle_in_dir(dir)
-            if log < 20:
-                print(f"searching for obs from {self.pos} to {dir}. res {obs_in_path}")
-                log += 1
             if obs_in_path is None or obs_in_path in self.block_positions:
                 self.move()
                 continue
             new_obs = self.move(False)
-            print(f"{self.line_len=}, {self.lines_count=}, {new_obs=}")
-            res = self.duplicate(new_obs, logit)
-            logit = False
-            print('duplicated!')
+            if new_obs in self.checked:
+                self.move()
+                continue
+            res = self.duplicate(new_obs)
             if res:
                 self.block_positions.add(new_obs)
+                obs_loop += 1
+            else:
+                obs_no_loop += 1
+            self.checked.add(new_obs)
             self.move()
 
-        print(self.block_positions, len(self.block_positions))
+        total = 0
+        for obs in self.block_positions:
+            y, x = obs
+            if self.lines[y][x] == '#':
+                print("we placed an obs on top of an obs?")
+            else:
+                total += 1
+        print(total)
+        print(f"{obs_loop=}, {obs_no_loop=}")
+        print(len(self.block_positions))
         """
         gameplay loop needs to become:
         check what next move should be, if it's move (and not turn)
@@ -361,7 +370,7 @@ def main():
     try:
         global f
         f = open("log.txt", "w")
-        content = get_content(False)
+        content = get_content(test)
         grid = Grid(content.split('\n'))
         grid.play()
     except Exception as e:

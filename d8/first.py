@@ -58,28 +58,18 @@ def main():
     antinodes = set()
     for c in positions:
         all_loc = positions[c]
-        if len(all_loc) == 1:
-            continue
         for i in range(len(all_loc)):
-            antinodes.add(all_loc[i].ser())
             p1 = all_loc[i]
             for y in range(i+1, len(all_loc)):
                 p2 = all_loc[y]
                 vec = p2 - p1
                 an1 = p2 + vec 
-                while within_boundaries(an1):
+                if within_boundaries(an1):
                     antinodes.add(an1.ser())
-                    an1 += vec
                 an2 = p1 - vec
-                while within_boundaries(an2):
+                if within_boundaries(an2):
                     antinodes.add(an2.ser())
-                    an2 -= vec
     # represent(lines, antinodes)
     print(len(antinodes))
 
 main()
-"""
-now instead of just adding the location 1 step over in each direction I need to add all locations in line in both directions
-I thought I could just calculate how many fit in each direction and add that to count, but they might overlap, so I'm not sure how ot avoid that
-you could compute the vector + passing point and understand whether anoher line overlaps or there is an intersection with any other line but maybe too mucH??
-"""

@@ -87,7 +87,7 @@ def checksum(s: list[int]) -> int:
 
 def main():
     test = "2333133121414131402"
-    real = False
+    real = True
     if real:
         with open("real.txt") as f:
             test = f.read()

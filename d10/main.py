@@ -4,6 +4,7 @@ line_len = -1
 def search_path(grid, cury, curx):
     v = grid[cury][curx]
     if v == 9:
+        return 1
         peak = set()
         peak.add((cury, curx))
         return peak
@@ -16,13 +17,15 @@ def search_path(grid, cury, curx):
         to_check += [(cury, curx - 1)]
     if curx + 1 < line_len:
         to_check += [(cury, curx + 1)]
-    peaks = set()
+    # peaks = set()
+    peaks = 0
     for point in to_check: 
         y,x = point
         if grid[y][x] != v + 1:
             continue
         # print(f"{v=} {cury=} {curx=} {y=} {x=}")
-        peaks = peaks.union(search_path(grid, y, x))
+        # peaks = peaks.union(search_path(grid, y, x))
+        peaks += search_path(grid, y, x)
     return peaks
 
 def main():
@@ -44,7 +47,8 @@ def main():
                 continue
             peaks = search_path(lines, y, x)
             # print(y, x, peaks)
-            answer += len(peaks)
+            # answer += len(peaks)
+            answer += peaks
             # print(answer, y, x)
     print(answer)
     answer == 36

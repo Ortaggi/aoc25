@@ -1,3 +1,4 @@
+from collections import UserDict
 def count_digits(n: int):
     d = 1
     while n // 10 != 0:
@@ -6,42 +7,77 @@ def count_digits(n: int):
     return d
 
 cache = {}
+
+class DictWithMax(UserDict):
+    def __init__(self, mapping):
+        self.max = -1
+        for k in mapping:
+            if k > self.max:
+                self.max = k
+        super().__init__(mapping)
+    
+    def __setitem__(self, key, value):
+        if key > self.max:
+            self.max = key
+        super().__setitem__(key, value)
+
+
+"""
+esempio:
+1 -> 2024
+2024 -> 20 24
+20 24 -> 2 0 2 4
+2 0 2 4 -> 4048 1 4048 8096
+
+f([1],1) = [2024]
+f([1],2) = f([2024], 1) = [20 24]
+f([1],3) = f([2024], 2) = f([20 24], 1) = [2 0 2 4]
+"""
+
+def transformsnc(n: int, turns: int):
+    if turns == 0:
+        return 1
+    if n == 0:
+        return transformsnc(1, turns - 1)
+    digits = count_digits(n)
+    if digits % 2 == 0:
+        left = int(n // 10**(digits/2))
+        right = int(n % 10**(digits/2))
+        return transformsnc(left, turns - 1) + transformsnc(right, turns - 1)
+    return transformsnc(n * 2024, turns - 1)
+
+cache = {}
+def transform(n: int, turns: int):
+    if turns == 0:
+        return 1
+    hsh = (n,turns)
+    if hsh in cache:
+        return cache[hsh]
+    if n == 0:
+        result = transform(1, turns - 1)
+        cache[hsh] = result
+        return result
+    digits = count_digits(n)
+    if digits % 2 == 0:
+        left = int(n // 10**(digits/2))
+        right = int(n % 10**(digits/2))
+        result = transform(left, turns - 1) + transform(right, turns - 1)
+        cache[hsh] = result
+        return result
+    result = transform(n * 2024, turns - 1)
+    cache[hsh] = result
+    return result
+
 def main():
-    test = "125 17"
-    real = "510613 358 84 40702 4373582 2 0 1584"
-    stones = [int(v) for v in real.split(' ') if v.strip()]
-    print(stones)
+    test = False
+    input = "125 17" if test else "510613 358 84 40702 4373582 2 0 1584"
+    stones = [int(v) for v in input.split(' ') if v.strip()]
     blinks = 75
-    for i in range(blinks):
-        if i % 5 == 0:
-            print(f"blink {i}, stone len {len(stones)}")
-        new_stones = []
-        for s in stones:
-            if s == 0:
-                new_stones += [1]
-            else: 
-                if s in cache:
-                    new_stones += cache[s]
-                    continue
-                digits = count_digits(s)
-                if digits % 2 == 0:
-                    left = int(s // 10**(digits/2))
-                    right = int(s % 10**(digits/2))
-                    new_stones += [left, right]
-                    cache[s] = [left, right]
-                else:
-                    new_stones += [s * 2024]
-                    cache[s] = [s * 2024]
-        stones = new_stones
-    print(len(stones))
-                
+    result = 0
+    for s in stones:
+        result += transform(s, blinks)
+        print(f"done with stone {s}")
+    print(result)
 
-
-    correct = 55312
 
 main()
-"""
-if 0 -> 1
-if even number of digits -> split into two, remove leading 0s
-else multiply for 2024
-"""

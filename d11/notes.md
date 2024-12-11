@@ -1,0 +1,1 @@
+dopo ogni turno una pietra genera 1 o 2 pietre

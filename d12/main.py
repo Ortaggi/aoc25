@@ -86,22 +86,24 @@ class Game:
             regions = self.real_regions[c]
             for i, region in enumerate(regions):
                 area = len(region)
-                perimeter = 0
+                perimeter_lines = set()
                 for pos in region:
                     y,x = pos
-                    edges = 0
+                    """
+                    AAA
+
+                    """
                     # check left edge
                     if x == 0 or (y, x-1) not in region:
-                        edges += 1
+                        perimeter_lines.add(('x',x))
                     if x == self.line_len - 1 or (y, x+1) not in region:
-                        edges += 1
+                        perimeter_lines.add(('x',x+1))
                     if y == 0 or (y - 1, x) not in region:
-                        edges += 1
+                        perimeter_lines.add(('y',y))
                     if y == self.line_count - 1 or (y + 1, x) not in region:
-                        edges += 1
-                    perimeter += edges
-                rtotal = area * perimeter
-                print(f'region {i} for c {c}: area {area} peri {perimeter}, rtotal: {rtotal}')
+                        perimeter_lines.add(('y',y+1))
+                rtotal = area * len(perimeter_lines)
+                print(f'reg {i} for char {c}: a {area} p {perimeter_lines}, tot: {rtotal}')
                 total += rtotal
         print(total)
 
@@ -115,5 +117,5 @@ class Game:
         # print(self.areas)
         # print(self.total)
 
-game = Game("real.txt")
+game = Game("test1.txt")
 game.play()

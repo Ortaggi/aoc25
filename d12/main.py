@@ -6,7 +6,7 @@ def hash_from_lines(l1: Line, l2: Line):
         v = l1; h = l2
     else:
         v = l2; h = l1
-    return (h[0],v[1],h,v)
+    return ((h[0],v[1]),h,v)
     """
     1,2,h
     1,2,v
@@ -126,7 +126,8 @@ class Game:
                   E D F 
                 3      
                 """
-                vertices = set()
+                vertices = 0
+                burnt = set()
                 while edges:
                     edg = edges.pop()
                     y,x,dir = edg
@@ -136,49 +137,81 @@ class Game:
                         if new_ed in edges:
                             # print(edg, new_ed)
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                         new_ed = (y+1, x, 'h')
                         if new_ed in edges:
                             # print(edg, new_ed)
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                         new_ed = (y, x - 1, 'h')
                         if new_ed in edges:
                             # print(edg, new_ed)
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                         new_ed = (y+1, x - 1, 'h')
                         if new_ed in edges:
                             # print(edg, new_ed)
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                     else:
                         new_ed = (y, x+1, 'v')
                         if new_ed in edges:
                             # print(edg, new_ed)
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                         new_ed = (y-1, x+1, 'v')
                         if new_ed in edges:
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                             # continue
                         new_ed = (y - 1, x, 'v')
                         if new_ed in edges:
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
                             # continue
                         new_ed = (y, x, 'v')
                         if new_ed in edges:
                             # print(edg, new_ed)
                             # edges.remove(new_ed)
-                            vertices.add(hash_from_lines(edg, new_ed))
-                points = {}
-                for v in vertices:
-                    p = (v[0],v[1])
-                    points[p] = points.get(p, 0) + 1
-                print(points)
-                rtotal = area * len(vertices)
+                            p, h, v = hash_from_lines(edg, new_ed)
+                            if (p,h) not in burnt and (p,v) not in burnt:
+                                burnt.add((p,h))
+                                burnt.add((p,v))
+                                vertices += 1
+                # points = {}
+                # for v in vertices:
+                #     p = (v[0],v[1])
+                #     points[p] = points.get(p, 0) + 1
+                # print(points)
+                rtotal = area * vertices
                 # print(f'region {i} for c {c}: area {area} peri {vertices}, rtotal: {rtotal}')
                 total += rtotal
         return total
@@ -198,7 +231,8 @@ answers = {
     # "test2": 436,
     # "test3": 1206,
     # "test4": 236,
-    "test5": 368
+    # "test5": 368
+    "real": 0
 }
 for k in answers:
     print(k)

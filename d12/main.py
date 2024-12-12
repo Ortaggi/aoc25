@@ -86,24 +86,55 @@ class Game:
             regions = self.real_regions[c]
             for i, region in enumerate(regions):
                 area = len(region)
-                perimeter_lines = set()
+                edges = set()
                 for pos in region:
                     y,x = pos
-                    """
-                    AAA
-
-                    """
                     # check left edge
                     if x == 0 or (y, x-1) not in region:
-                        perimeter_lines.add(('x',x))
+                        edges.add((y, x, 'v'))
                     if x == self.line_len - 1 or (y, x+1) not in region:
-                        perimeter_lines.add(('x',x+1))
+                        edges.add((y, x+1, 'v'))
                     if y == 0 or (y - 1, x) not in region:
-                        perimeter_lines.add(('y',y))
+                        edges.add((y, x, 'h'))
                     if y == self.line_count - 1 or (y + 1, x) not in region:
-                        perimeter_lines.add(('y',y+1))
-                rtotal = area * len(perimeter_lines)
-                print(f'reg {i} for char {c}: a {area} p {perimeter_lines}, tot: {rtotal}')
+                        edges.add((y+1, x, 'h'))
+                groups = 0
+                while edges:
+                    edg = edges.pop()
+                    y,x,dir = edg
+                    if dir == 'v':
+                        py = y - 1
+                        while py >= 0:
+                            new_ed =  (py, x, dir)
+                            if new_ed not in edges:
+                                break
+                            edges.remove(new_ed)
+                            py -= 1
+                        py = y + 1
+                        while py <= self.line_count:
+                            new_ed =  (py, x, dir)
+                            if new_ed not in edges:
+                                break
+                            edges.remove(new_ed)
+                            py += 1
+                    else:
+                        px = x - 1
+                        while px >= 0:
+                            new_ed =  (y, px, dir)
+                            if new_ed not in edges:
+                                break
+                            edges.remove(new_ed)
+                            px -= 1
+                        px = x + 1
+                        while px <= self.line_len:
+                            new_ed =  (y, px, dir)
+                            if new_ed not in edges:
+                                break
+                            edges.remove(new_ed)
+                            px += 1
+                    groups += 1
+                rtotal = area * groups
+                print(f'region {i} for c {c}: area {area} peri {groups}, rtotal: {rtotal}')
                 total += rtotal
         print(total)
 
@@ -117,5 +148,5 @@ class Game:
         # print(self.areas)
         # print(self.total)
 
-game = Game("test1.txt")
+game = Game("test5.txt")
 game.play()

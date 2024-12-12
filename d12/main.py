@@ -1,5 +1,23 @@
 from functools import reduce
 
+type Line = tuple[int, int, str]
+def hash_from_lines(l1: Line, l2: Line):
+    if l1[2] == 'v':
+        v = l1; h = l2
+    else:
+        v = l2; h = l1
+    return (h[0],v[1],h,v)
+    """
+    1,2,h
+    1,2,v
+    1,2 (punto)
+    1,2,h
+    1,3,v + 2,3h = 2,3
+    1,3 punto
+    4,3,h + 3,4,v = 4,4
+    y da h, x da v per punto, ordiniamo prima h e poi v
+    """
+
 class Game:
     def __init__(self, fname):
         with open(fname) as f:
@@ -98,55 +116,95 @@ class Game:
                         edges.add((y, x, 'h'))
                     if y == self.line_count - 1 or (y + 1, x) not in region:
                         edges.add((y+1, x, 'h'))
-                groups = 0
+                """
+                 0 1 2 3
+                0       
+                  A A E 
+                1       
+                  B C D 
+                2       
+                  E D F 
+                3      
+                """
+                vertices = set()
                 while edges:
                     edg = edges.pop()
                     y,x,dir = edg
                     if dir == 'v':
-                        py = y - 1
-                        while py >= 0:
-                            new_ed =  (py, x, dir)
-                            if new_ed not in edges:
-                                break
-                            edges.remove(new_ed)
-                            py -= 1
-                        py = y + 1
-                        while py <= self.line_count:
-                            new_ed =  (py, x, dir)
-                            if new_ed not in edges:
-                                break
-                            edges.remove(new_ed)
-                            py += 1
+                        # check if edge above to left, above to right, below to left, below to right
+                        new_ed = (y, x, 'h')
+                        if new_ed in edges:
+                            # print(edg, new_ed)
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                        new_ed = (y+1, x, 'h')
+                        if new_ed in edges:
+                            # print(edg, new_ed)
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                        new_ed = (y, x - 1, 'h')
+                        if new_ed in edges:
+                            # print(edg, new_ed)
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                        new_ed = (y+1, x - 1, 'h')
+                        if new_ed in edges:
+                            # print(edg, new_ed)
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
                     else:
-                        px = x - 1
-                        while px >= 0:
-                            new_ed =  (y, px, dir)
-                            if new_ed not in edges:
-                                break
-                            edges.remove(new_ed)
-                            px -= 1
-                        px = x + 1
-                        while px <= self.line_len:
-                            new_ed =  (y, px, dir)
-                            if new_ed not in edges:
-                                break
-                            edges.remove(new_ed)
-                            px += 1
-                    groups += 1
-                rtotal = area * groups
-                print(f'region {i} for c {c}: area {area} peri {groups}, rtotal: {rtotal}')
+                        new_ed = (y, x+1, 'v')
+                        if new_ed in edges:
+                            # print(edg, new_ed)
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                        new_ed = (y-1, x+1, 'v')
+                        if new_ed in edges:
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                            # continue
+                        new_ed = (y - 1, x, 'v')
+                        if new_ed in edges:
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                            # continue
+                        new_ed = (y, x, 'v')
+                        if new_ed in edges:
+                            # print(edg, new_ed)
+                            # edges.remove(new_ed)
+                            vertices.add(hash_from_lines(edg, new_ed))
+                points = {}
+                for v in vertices:
+                    p = (v[0],v[1])
+                    points[p] = points.get(p, 0) + 1
+                print(points)
+                rtotal = area * len(vertices)
+                # print(f'region {i} for c {c}: area {area} peri {vertices}, rtotal: {rtotal}')
                 total += rtotal
-        print(total)
+        return total
 
     def play(self):
         self.find_regions()
         # self.compute_areas()
         # self.compute_perimeters()
         self.segment_regions()
-        self.compute_total()
+        return self.compute_total()
         # print(self.perimeters)
         # print(self.areas)
         # print(self.total)
 
-game = Game("test5.txt")
-game.play()
+answers = {
+    # "test1": 80,
+    # "test2": 436,
+    # "test3": 1206,
+    # "test4": 236,
+    "test5": 368
+}
+for k in answers:
+    print(k)
+    game = Game(f"{k}.txt")
+    total = game.play()
+    print(total, answers[k])
+    print(answers[k] == total)
+    print("=============")
+    
